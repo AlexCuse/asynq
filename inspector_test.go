@@ -3374,6 +3374,8 @@ func TestParseOption(t *testing.T) {
 		{ProcessAt(oneHourFromNow).String(), ProcessAtOpt, oneHourFromNow},
 		{`ProcessIn(10m)`, ProcessInOpt, 10 * time.Minute},
 		{`Retention(24h)`, RetentionOpt, 24 * time.Hour},
+		{"UnlimitedRetry(true)", UnlimitedRetryOpt, true},
+		{"UnlimitedRetry(false)", UnlimitedRetryOpt, false},
 	}
 
 	for _, tc := range tests {
@@ -3403,6 +3405,14 @@ func TestParseOption(t *testing.T) {
 					t.Fatal("returned Option with non-int value")
 				}
 				if gotVal != tc.wantVal.(int) {
+					t.Fatalf("got value %v, want %v", gotVal, tc.wantVal)
+				}
+			case UnlimitedRetryOpt:
+				gotVal, ok := got.Value().(bool)
+				if !ok {
+					t.Fatal("returned Option with non-bool value")
+				}
+				if gotVal != tc.wantVal.(bool) {
 					t.Fatalf("got value %v, want %v", gotVal, tc.wantVal)
 				}
 			case TimeoutOpt, UniqueOpt, ProcessInOpt, RetentionOpt:

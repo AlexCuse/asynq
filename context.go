@@ -34,6 +34,14 @@ func GetMaxRetry(ctx context.Context) (n int, ok bool) {
 	return asynqcontext.GetMaxRetry(ctx)
 }
 
+// GetUnlimitedRetry extracts unlimited retry from a context, if any.
+//
+// Return value b indicates whether the associated task can be retried
+// indefinitely if ProcessTask returns a non-nil error.
+func GetUnlimitedRetry(ctx context.Context) (b, ok bool) {
+	return asynqcontext.GetUnlimitedRetry(ctx)
+}
+
 // GetQueueName extracts queue name from a context, if any.
 //
 // Return value queue indicates which queue the task was pulled from.

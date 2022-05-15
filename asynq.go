@@ -128,6 +128,9 @@ type TaskInfo struct {
 	// Result holds the result data associated with the task.
 	// Use ResultWriter to write result data from the Handler.
 	Result []byte
+
+	// UnlimitedRetry indicates a task should be retried until completed.
+	UnlimitedRetry bool
 }
 
 // If t is non-zero, returns time converted from t as unix time in seconds.
@@ -141,21 +144,22 @@ func fromUnixTimeOrZero(t int64) time.Time {
 
 func newTaskInfo(msg *base.TaskMessage, state base.TaskState, nextProcessAt time.Time, result []byte) *TaskInfo {
 	info := TaskInfo{
-		ID:            msg.ID,
-		Queue:         msg.Queue,
-		Type:          msg.Type,
-		Payload:       msg.Payload, // Do we need to make a copy?
-		MaxRetry:      msg.Retry,
-		Retried:       msg.Retried,
-		LastErr:       msg.ErrorMsg,
-		Group:         msg.GroupKey,
-		Timeout:       time.Duration(msg.Timeout) * time.Second,
-		Deadline:      fromUnixTimeOrZero(msg.Deadline),
-		Retention:     time.Duration(msg.Retention) * time.Second,
-		NextProcessAt: nextProcessAt,
-		LastFailedAt:  fromUnixTimeOrZero(msg.LastFailedAt),
-		CompletedAt:   fromUnixTimeOrZero(msg.CompletedAt),
-		Result:        result,
+		ID:             msg.ID,
+		Queue:          msg.Queue,
+		Type:           msg.Type,
+		Payload:        msg.Payload, // Do we need to make a copy?
+		MaxRetry:       msg.Retry,
+		UnlimitedRetry: msg.UnlimitedRetry,
+		Retried:        msg.Retried,
+		LastErr:        msg.ErrorMsg,
+		Group:          msg.GroupKey,
+		Timeout:        time.Duration(msg.Timeout) * time.Second,
+		Deadline:       fromUnixTimeOrZero(msg.Deadline),
+		Retention:      time.Duration(msg.Retention) * time.Second,
+		NextProcessAt:  nextProcessAt,
+		LastFailedAt:   fromUnixTimeOrZero(msg.LastFailedAt),
+		CompletedAt:    fromUnixTimeOrZero(msg.CompletedAt),
+		Result:         result,
 	}
 
 	switch state {

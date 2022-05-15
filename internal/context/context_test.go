@@ -141,6 +141,7 @@ func TestGetTaskMetadataFromContext(t *testing.T) {
 	}{
 		{"with zero retried message", &base.TaskMessage{Type: "something", ID: uuid.NewString(), Retry: 25, Retried: 0, Timeout: 1800, Queue: "default"}},
 		{"with non-zero retried message", &base.TaskMessage{Type: "something", ID: uuid.NewString(), Retry: 10, Retried: 5, Timeout: 1800, Queue: "default"}},
+		{"with unlimited retry message", &base.TaskMessage{Type: "something", ID: uuid.NewString(), UnlimitedRetry: true, Timeout: 1800, Queue: "default"}},
 		{"with custom queue name", &base.TaskMessage{Type: "something", ID: uuid.NewString(), Retry: 25, Retried: 0, Timeout: 1800, Queue: "custom"}},
 	}
 
@@ -172,6 +173,14 @@ func TestGetTaskMetadataFromContext(t *testing.T) {
 			t.Errorf("%s: GetMaxRetry(ctx) returned n == %d want %d", tc.desc, maxRetry, tc.msg.Retry)
 		}
 
+		unlimitedRetry, ok := GetUnlimitedRetry(ctx)
+		if !ok {
+			t.Errorf("%s: GetUnlimitedRetry(ctx) returned ok == false", tc.desc)
+		}
+		if ok && maxRetry != tc.msg.Retry {
+			t.Errorf("%s: GetUnlimitedRetry(ctx) returned %v want %v", tc.desc, unlimitedRetry, tc.msg.UnlimitedRetry)
+		}
+
 		qname, ok := GetQueueName(ctx)
 		if !ok {
 			t.Errorf("%s: GetQueueName(ctx) returned ok == false", tc.desc)
@@ -199,6 +208,9 @@ func TestGetTaskMetadataFromContextError(t *testing.T) {
 		}
 		if _, ok := GetMaxRetry(tc.ctx); ok {
 			t.Errorf("%s: GetMaxRetry(ctx) returned ok == true", tc.desc)
+		}
+		if _, ok := GetUnlimitedRetry(tc.ctx); ok {
+			t.Errorf("%s: GetUnlimitedRetry(ctx) returned ok == true", tc.desc)
 		}
 		if _, ok := GetQueueName(tc.ctx); ok {
 			t.Errorf("%s: GetQueueName(ctx) returned ok == true", tc.desc)

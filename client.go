@@ -49,6 +49,7 @@ const (
 	TaskIDOpt
 	RetentionOpt
 	GroupOpt
+	UnlimitedRetryOpt
 )
 
 // Option specifies the task processing behavior.
@@ -65,16 +66,17 @@ type Option interface {
 
 // Internal option representations.
 type (
-	retryOption     int
-	queueOption     string
-	taskIDOption    string
-	timeoutOption   time.Duration
-	deadlineOption  time.Time
-	uniqueOption    time.Duration
-	processAtOption time.Time
-	processInOption time.Duration
-	retentionOption time.Duration
-	groupOption     string
+	retryOption          int
+	queueOption          string
+	taskIDOption         string
+	timeoutOption        time.Duration
+	deadlineOption       time.Time
+	uniqueOption         time.Duration
+	processAtOption      time.Time
+	processInOption      time.Duration
+	retentionOption      time.Duration
+	groupOption          string
+	unlimitedRetryOption bool
 )
 
 // MaxRetry returns an option to specify the max number of times
@@ -91,6 +93,17 @@ func MaxRetry(n int) Option {
 func (n retryOption) String() string     { return fmt.Sprintf("MaxRetry(%d)", int(n)) }
 func (n retryOption) Type() OptionType   { return MaxRetryOpt }
 func (n retryOption) Value() interface{} { return int(n) }
+
+// UnlimitedRetry return an option to specify whether the task enqueuer wants the processor to be
+// retried until completed.  This overrides MaxRetry if true.  Processors can terminate retries
+// by succeeding or using SkipRetry.
+func UnlimitedRetry(v bool) Option {
+	return unlimitedRetryOption(v)
+}
+
+func (ur unlimitedRetryOption) String() string     { return fmt.Sprintf("UnlimitedRetry(%t)", ur) }
+func (ur unlimitedRetryOption) Type() OptionType   { return UnlimitedRetryOpt }
+func (ur unlimitedRetryOption) Value() interface{} { return bool(ur) }
 
 // Queue returns an option to specify the queue to enqueue the task into.
 func Queue(name string) Option {
@@ -217,15 +230,16 @@ var ErrDuplicateTask = errors.New("task already exists")
 var ErrTaskIDConflict = errors.New("task ID conflicts with another task")
 
 type option struct {
-	retry     int
-	queue     string
-	taskID    string
-	timeout   time.Duration
-	deadline  time.Time
-	uniqueTTL time.Duration
-	processAt time.Time
-	retention time.Duration
-	group     string
+	retry          int
+	queue          string
+	taskID         string
+	timeout        time.Duration
+	deadline       time.Time
+	uniqueTTL      time.Duration
+	processAt      time.Time
+	retention      time.Duration
+	group          string
+	unlimitedRetry bool
 }
 
 // composeOptions merges user provided options into the default options
@@ -245,6 +259,8 @@ func composeOptions(opts ...Option) (option, error) {
 		switch opt := opt.(type) {
 		case retryOption:
 			res.retry = int(opt)
+		case unlimitedRetryOption:
+			res.unlimitedRetry = bool(opt)
 		case queueOption:
 			qname := string(opt)
 			if err := base.ValidateQueueName(qname); err != nil {
@@ -368,16 +384,17 @@ func (c *Client) EnqueueContext(ctx context.Context, task *Task, opts ...Option)
 		uniqueKey = base.UniqueKey(opt.queue, task.Type(), task.Payload())
 	}
 	msg := &base.TaskMessage{
-		ID:        opt.taskID,
-		Type:      task.Type(),
-		Payload:   task.Payload(),
-		Queue:     opt.queue,
-		Retry:     opt.retry,
-		Deadline:  deadline.Unix(),
-		Timeout:   int64(timeout.Seconds()),
-		UniqueKey: uniqueKey,
-		GroupKey:  opt.group,
-		Retention: int64(opt.retention.Seconds()),
+		ID:             opt.taskID,
+		Type:           task.Type(),
+		Payload:        task.Payload(),
+		Queue:          opt.queue,
+		Retry:          opt.retry,
+		UnlimitedRetry: opt.unlimitedRetry,
+		Deadline:       deadline.Unix(),
+		Timeout:        int64(timeout.Seconds()),
+		UniqueKey:      uniqueKey,
+		GroupKey:       opt.group,
+		Retention:      int64(opt.retention.Seconds()),
 	}
 	now := time.Now()
 	var state base.TaskState

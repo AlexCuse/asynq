@@ -191,6 +191,40 @@ func TestClientEnqueue(t *testing.T) {
 			},
 		},
 		{
+			desc: "Process task immediately with unlimited retry",
+			task: task,
+			opts: []Option{
+				UnlimitedRetry(true),
+			},
+			wantInfo: &TaskInfo{
+				Queue:          "default",
+				Type:           task.Type(),
+				Payload:        task.Payload(),
+				State:          TaskStatePending,
+				UnlimitedRetry: true,
+				MaxRetry:       25,
+				Retried:        0,
+				LastErr:        "",
+				LastFailedAt:   time.Time{},
+				Timeout:        defaultTimeout,
+				Deadline:       time.Time{},
+				NextProcessAt:  now,
+			},
+			wantPending: map[string][]*base.TaskMessage{
+				"default": {
+					{
+						Type:           task.Type(),
+						Payload:        task.Payload(),
+						Retry:          25,
+						UnlimitedRetry: true,
+						Queue:          "default",
+						Timeout:        int64(defaultTimeout.Seconds()),
+						Deadline:       noDeadline.Unix(),
+					},
+				},
+			},
+		},
+		{
 			desc: "Negative retry count",
 			task: task,
 			opts: []Option{

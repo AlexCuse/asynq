@@ -927,6 +927,12 @@ func parseOption(s string) (Option, error) {
 			return nil, err
 		}
 		return MaxRetry(n), nil
+	case "UnlimitedRetry":
+		b, err := strconv.ParseBool(arg)
+		if err != nil {
+			return nil, err
+		}
+		return UnlimitedRetry(b), nil
 	case "Timeout":
 		d, err := time.ParseDuration(arg)
 		if err != nil {

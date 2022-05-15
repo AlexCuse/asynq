@@ -25,6 +25,9 @@ func TestRecoverer(t *testing.T) {
 	t3 := h.NewTaskMessageWithQueue("task3", nil, "critical")
 	t4 := h.NewTaskMessageWithQueue("task4", nil, "default")
 	t4.Retried = t4.Retry // t4 has reached its max retry count
+	t5 := h.NewTaskMessageWithQueue("task5", nil, "default")
+	t5.Retried = t5.Retry    // t5 has reached its max retry count
+	t5.UnlimitedRetry = true // but unlimited retry should override
 
 	now := time.Now()
 
@@ -98,6 +101,41 @@ func TestRecoverer(t *testing.T) {
 			},
 			wantArchived: map[string][]*base.TaskMessage{
 				"default":  {t4},
+				"critical": {},
+			},
+		},
+		{
+			desc: "with a task with unlimited retries",
+			active: map[string][]*base.TaskMessage{
+				"default":  {t5},
+				"critical": {},
+			},
+			lease: map[string][]base.Z{
+				"default":  {{Message: t5, Score: now.Add(-40 * time.Second).Unix()}},
+				"critical": {},
+			},
+			retry: map[string][]base.Z{
+				"default":  {},
+				"critical": {},
+			},
+			archived: map[string][]base.Z{
+				"default":  {},
+				"critical": {},
+			},
+			wantActive: map[string][]*base.TaskMessage{
+				"default":  {},
+				"critical": {},
+			},
+			wantLease: map[string][]base.Z{
+				"default":  {},
+				"critical": {},
+			},
+			wantRetry: map[string][]*base.TaskMessage{
+				"default":  {t5},
+				"critical": {},
+			},
+			wantArchived: map[string][]*base.TaskMessage{
+				"default":  {},
 				"critical": {},
 			},
 		},

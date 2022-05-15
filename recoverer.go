@@ -95,7 +95,7 @@ func (r *recoverer) recoverLeaseExpiredTasks() {
 		return
 	}
 	for _, msg := range msgs {
-		if msg.Retried >= msg.Retry {
+		if !msg.UnlimitedRetry && msg.Retried >= msg.Retry {
 			r.archive(msg, ErrLeaseExpired)
 		} else {
 			r.retry(msg, ErrLeaseExpired)

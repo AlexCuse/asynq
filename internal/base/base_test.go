@@ -528,6 +528,34 @@ func TestMessageEncoding(t *testing.T) {
 				Retention: 3600,
 			},
 		},
+		{
+			in: &TaskMessage{
+				Type:           "task1",
+				Payload:        toBytes(map[string]interface{}{"a": 1, "b": "hello!", "c": true}),
+				ID:             id,
+				Queue:          "default",
+				GroupKey:       "mygroup",
+				UnlimitedRetry: true,
+				Retry:          0,
+				Retried:        0,
+				Timeout:        1800,
+				Deadline:       1692311100,
+				Retention:      3600,
+			},
+			out: &TaskMessage{
+				Type:           "task1",
+				Payload:        toBytes(map[string]interface{}{"a": json.Number("1"), "b": "hello!", "c": true}),
+				ID:             id,
+				Queue:          "default",
+				GroupKey:       "mygroup",
+				UnlimitedRetry: true,
+				Retry:          0,
+				Retried:        0,
+				Timeout:        1800,
+				Deadline:       1692311100,
+				Retention:      3600,
+			},
+		},
 	}
 
 	for _, tc := range tests {

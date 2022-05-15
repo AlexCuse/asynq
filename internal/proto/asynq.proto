@@ -31,6 +31,9 @@ message TaskMessage {
 	// Number of times this task has been retried so far.
   int32 retried = 6;
 
+  // Indicates whether this task should retry indefinitely.
+  bool unlimited_retry = 15;
+
 	// Error message from the last failure.
   string error_msg = 7;
 

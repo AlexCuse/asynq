@@ -246,6 +246,9 @@ type TaskMessage struct {
 	// Queue is a name this message should be enqueued to.
 	Queue string
 
+	// UnlimitedRetry indicates this message should be retried until completion.
+	UnlimitedRetry bool
+
 	// Retry is the max number of retry for this task.
 	Retry int
 
@@ -302,20 +305,21 @@ func EncodeMessage(msg *TaskMessage) ([]byte, error) {
 		return nil, fmt.Errorf("cannot encode nil message")
 	}
 	return proto.Marshal(&pb.TaskMessage{
-		Type:         msg.Type,
-		Payload:      msg.Payload,
-		Id:           msg.ID,
-		Queue:        msg.Queue,
-		Retry:        int32(msg.Retry),
-		Retried:      int32(msg.Retried),
-		ErrorMsg:     msg.ErrorMsg,
-		LastFailedAt: msg.LastFailedAt,
-		Timeout:      msg.Timeout,
-		Deadline:     msg.Deadline,
-		UniqueKey:    msg.UniqueKey,
-		GroupKey:     msg.GroupKey,
-		Retention:    msg.Retention,
-		CompletedAt:  msg.CompletedAt,
+		Type:           msg.Type,
+		Payload:        msg.Payload,
+		Id:             msg.ID,
+		Queue:          msg.Queue,
+		UnlimitedRetry: msg.UnlimitedRetry,
+		Retry:          int32(msg.Retry),
+		Retried:        int32(msg.Retried),
+		ErrorMsg:       msg.ErrorMsg,
+		LastFailedAt:   msg.LastFailedAt,
+		Timeout:        msg.Timeout,
+		Deadline:       msg.Deadline,
+		UniqueKey:      msg.UniqueKey,
+		GroupKey:       msg.GroupKey,
+		Retention:      msg.Retention,
+		CompletedAt:    msg.CompletedAt,
 	})
 }
 
@@ -326,20 +330,21 @@ func DecodeMessage(data []byte) (*TaskMessage, error) {
 		return nil, err
 	}
 	return &TaskMessage{
-		Type:         pbmsg.GetType(),
-		Payload:      pbmsg.GetPayload(),
-		ID:           pbmsg.GetId(),
-		Queue:        pbmsg.GetQueue(),
-		Retry:        int(pbmsg.GetRetry()),
-		Retried:      int(pbmsg.GetRetried()),
-		ErrorMsg:     pbmsg.GetErrorMsg(),
-		LastFailedAt: pbmsg.GetLastFailedAt(),
-		Timeout:      pbmsg.GetTimeout(),
-		Deadline:     pbmsg.GetDeadline(),
-		UniqueKey:    pbmsg.GetUniqueKey(),
-		GroupKey:     pbmsg.GetGroupKey(),
-		Retention:    pbmsg.GetRetention(),
-		CompletedAt:  pbmsg.GetCompletedAt(),
+		Type:           pbmsg.GetType(),
+		Payload:        pbmsg.GetPayload(),
+		ID:             pbmsg.GetId(),
+		Queue:          pbmsg.GetQueue(),
+		UnlimitedRetry: pbmsg.GetUnlimitedRetry(),
+		Retry:          int(pbmsg.GetRetry()),
+		Retried:        int(pbmsg.GetRetried()),
+		ErrorMsg:       pbmsg.GetErrorMsg(),
+		LastFailedAt:   pbmsg.GetLastFailedAt(),
+		Timeout:        pbmsg.GetTimeout(),
+		Deadline:       pbmsg.GetDeadline(),
+		UniqueKey:      pbmsg.GetUniqueKey(),
+		GroupKey:       pbmsg.GetGroupKey(),
+		Retention:      pbmsg.GetRetention(),
+		CompletedAt:    pbmsg.GetCompletedAt(),
 	}, nil
 }
 
